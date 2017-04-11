@@ -10,6 +10,27 @@
     stroke-width: 1px;*/
 }
 
+.labelname{
+	color: white;
+	text-align: center;
+}
+
+.container {
+
+	background-color: black;
+}
+
+.titleRec {
+	fill: black;
+}
+
+.pageTitle {
+	font-size: 55px;
+	fill: white;
+	font-weight: bold;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
 .gratBackground{
 
 	fill: #D5E3FF;
@@ -34,6 +55,11 @@
     margin: 10px 20px 0 0;
 }
 
+.dropdown {
+	margin: 60px;
+	margin-left: 750px;
+}
+
 .chartBackground {
     fill: 
 }
@@ -43,6 +69,7 @@
     font-family: sans-serif;
     font-size: 1.5em;
     font-weight: bold;
+    fill: #999;
 }
 
 .chartFrame {
@@ -52,15 +79,35 @@
     shape-rendering: crispEdges;
 }
 
-.axis path,
-.axis line {
+.circles {
+
+}
+
+.axis1 path,
+.axis1 line {
     fill: none;
     stroke: #999;
     stroke-width: 1px;
     shape-rendering: crispEdges;
 }
 
-.axis text {
+.axis1 text {
+    font-family: sans-serif;
+    font-size: 8px;
+    fill: #999;
+
+    
+}
+
+.axis2 path,
+.axis2 line {
+    fill: none;
+    stroke: #999;
+    stroke-width: 1px;
+    shape-rendering: crispEdges;
+}
+
+.axis2 text {
     font-family: sans-serif;
     font-size: 0.8em;
     fill: #999;
@@ -76,9 +123,78 @@
     font-weight: bold;
     padding: 2px;
     border: 1px solid #999;
-    box-shadow: 2px 2px 4px #999;
+    /*box-shadow: 2px 2px 4px #999;*/
 }
 
 option {
     font-weight: normal;
+}
+
+.xLabel{
+	font-family: sans-serif;
+    font-size: 0.8em;
+    fill: #999;
+
+
+}
+
+.yLabel{
+	font-family: sans-serif;
+    font-size: 0.8em;
+    fill: #999;
+  	
+  	
+}
+
+.yLabel text {
+	text-align: center;
+	vertical-align: middle;
+}
+
+
+
+
+
+
+
+.infolabel {
+    position: absolute;
+    height: 50px;
+    min-width: 100px;
+    color: lightgrey;
+    background-color: #000;
+    border: solid thin #fff;
+    padding: 5px 10px;
+    text-align: center;
+
+}
+
+.infolabel h1 {
+    margin: 0 20px 0 0;
+    padding: 0;
+    display: inline-block;
+    line-height: 1em;
+
+}
+
+.projectionLab {
+	font-family: sans-serif;
+	fill: white;
+	font-size: 10px;
+	
+}
+
+.createdBy {
+	font-family: sans-serif;
+	fill: white;
+	font-size: 10px;
+
+}
+
+.attrText  {
+	font-family: sans-serif;
+	fill: white;
+	font-size: 20px;
+
+
 }

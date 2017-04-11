@@ -1,42 +1,116 @@
 (function(){
 
 //pseudo-global variables
- //variables for data join
+//variables for data join
+document.body.style.backgroundColor = "black";
+
 var attrArray = ["Health Care Spending (PPP)", 
+				 "Health Care Spending(Per Capita USD)",
     			 "Life Expectancy", 
     			 "Maternal Mortality Rate (per 100,000 births)", 
-   				 "Infant Mortality Rate (1000 births)",  					 
-   				 "Population (2014)"];
+   				 "Infant Mortality Rate (1000 births)"];
 
 var expressed = attrArray[0]; //initial attribute
-var constant= attrArray[0];
+var constant= "Health Care Spending (PPP)";
+var constant2 =  "Health Care Spending(Per Capita USD)";
+var countryName = "ADMIN";
+var population = "Population (2014)";
 
-var chartWidth = window.innerWidth * 0.425,
-        chartHeight = 460,
-        leftPadding = 25,
+var chartWidth = window.innerWidth *.9 ,
+    	chartHeight = 250,
+        leftPadding = 35,
         rightPadding = 2,
         topBottomPadding = 5,
         chartInnerWidth = chartWidth - leftPadding - rightPadding,
         chartInnerHeight = chartHeight - topBottomPadding * 2,
-        translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
+        translate = "translate(" + leftPadding + "," + (topBottomPadding+2) + ")",
+		translate2 = "translate(" + leftPadding + "," + (chartInnerHeight+ 5) + ")";
 
+
+ 
 
 	 //create a scale to size bars proportionally to frame
 var yScale = d3.scaleLinear()
-        .range([0, chartWidth])
-        .domain([0, 500]);
+        .range([0, chartHeight])
+        .domain([1000, -50]);
 
 var xScale = d3.scaleLinear()
-		.range([0,chartHeight])
-		.domain([0,9000]);
+		.range([0,chartWidth])
+		.domain([-70,11000]);
+
+var yAxis = d3.axisLeft()
+        .scale(yScale);
+
+var xAxis = d3.axisTop()
+    	.scale(xScale);
+
+var axis1;
 
 var container = d3.select("body") //get the <body> element from the DOM
     .append("svg") //put a new svg in the body
+    .attr("class", "container")
     .attr("width", 1265) //assign the width
-    .attr("height", 625) //assign the height
-    .attr("class", "container") //assign a class name
-    .style("background-color", "rgba(0,0,0,0.2)"); //only put a semicolon at the end of the block!
+    .attr("height", 700) //assign the height
+    .attr("class", "container"); //assign a class name
+
+
+    
+var titleRec = container.append("rect")
+	.attr("class", "titleRec")
+	.attr("width", 1265)
+	.attr("height", 80)
+	.attr("x", 0)
+	.attr("y", 0);
        
+var pageTitle = container.append("text")
+	.attr("class", "pageTitle")
+	.attr("x", 70)
+	.attr("y", 58)
+	.text("Quality of Health Care in the World: 2016");
+
+
+var chart =  container.append("svg")
+        .attr("width", chartWidth)
+        .attr("height", chartHeight)
+        .attr("class", "chart")
+        .attr("x", 41) //position from left on the x (horizontal) axis
+        .attr("y", 385);
+
+var createdBy = container.append("text")
+	.attr("class", "createdBy")
+	.attr("x", 0)
+	.attr("y", 670)
+	.text("Created by Benjamin Segal");
+
+var projectionLab = container.append("text")
+	.attr("class", "projectionLab")
+	.attr("x", 0)
+	.attr("y", 683)
+	.text("Map Projection: Equirectangular");
+
+var dataLab = container.append("text")
+	.attr("class", "projectionLab")
+	.attr("x", 0)
+	.attr("y", 696)
+	.text("Data Source: worldbank.org");
+
+var yLabel;
+
+var xLabel = container.append("text")
+	.attr("class", "xLabel")
+	.attr("x", 550)
+	.attr("y", 650)
+	.text(constant);
+
+
+
+
+var attrText = container.append("text")
+			.attr("class", "attrText")
+			.attr("x", 0)
+			.attr("y", 100);
+
+
 
 
 //begin script when window loads
@@ -46,19 +120,16 @@ window.onload = setMap();
 function setMap(){
 
 	 //map frame dimensions
-     var width = window.innerWidth * 0.5,
-        height = 460;
-
-
-	 
+     var width = window.innerWidth *.5,
+         height = 460;
    
     //create new svg container for the map
     var map = container.append("svg")
         .attr("class", "map")
         .attr("width", width)
         .attr("height", height)
-        .attr("x", 20) //position from left on the x (horizontal) axis
-        .attr("y", 50);
+        .attr("x", 68) //position from left on the x (horizontal) axis
+        .attr("y", 0);
   
 
 
@@ -71,6 +142,7 @@ function setMap(){
     var path = d3.geoPath()
         .projection(projection);
 
+    
     //use d3.queue to parallelize asynchronous data loading
     d3.queue()
         .defer(d3.csv, "data/d3labdata.csv") //load attributes from csv
@@ -100,6 +172,7 @@ function setMap(){
             
        
 
+
         //create the color scale
         var colorScale = makeColorScale(csvData);
 
@@ -111,6 +184,10 @@ function setMap(){
 
         createDropdown(csvData);
 
+        createLegend(colorScale);
+
+     
+        
     };
 }; 
 
@@ -179,9 +256,11 @@ function setEnumerationUnits(worldMap, map, path, colorScale){
         .on("mouseover", function(d){
             highlight(d.properties);
         })
-          .on("mouseout", function(d){
+        .on("mouseout", function(d){
             dehighlight(d.properties);
-        });
+        })
+        .on("mousemove", moveLabel);
+
 
     var desc = regions.append("desc")
         .text('{"stroke": "#000", "stroke-width": "0.5px"}');
@@ -228,44 +307,60 @@ function makeColorScale(data){
     //assign array of expressed values as scale domain
     colorScale.domain(domainArray);
 
+    var max = d3.max(domainArray);
+
+    var min = max/6.2;
+
+    var min2 = d3.min(domainArray);
+
+   
+    if(min2 < 30){
+    	yScale.domain([max*1.3,0-min]);
+	};
+
+	if(min2> 30){
+		yScale.domain([max*1.1,min +23]);
+	};
+
+    yAxis.scale(yScale);
+
     return colorScale;
 };
 
 //function to create coordinated bar chart
 function setChart(csvData, colorScale){
-    //create a second svg element to hold the bar chart
-    var chart =  container.append("svg")
-        .attr("width", chartWidth)
-        .attr("height", chartHeight)
-        .attr("class", "chart")
-        .attr("x", 700) //position from left on the x (horizontal) axis
-        .attr("y", 100)
-        .style("background-color", "white");
 
+	
+
+    //create a second svg element to hold the bar chart
    	var circles = chart.selectAll("circle")  // <-- No longer "rect"
    		.data(csvData)
    		.enter()
    		.append("circle") 
    		.attr("class", function(d){
-            return "bars " + d.ADM0_A3;
+            return "circles " + d.ADM0_A3;
         })    
         .attr("width", (chartWidth / csvData.length-1))
+        .on("mouseover", function(){
+            return "circles " + d.ADM0_A3;
+        })    
         .on("mouseover", highlight)
-        .on("mouseout", dehighlight);
+        .on("mouseout", dehighlight)
+        .on("mousemove", moveLabel);
 
     var desc = circles.append("desc")
         .text('{"stroke": "none", "stroke-width": "0px"}');
 	    
 
     var chartTitle = chart.append("text")
-        .attr("x", 30)
-        .attr("y", 40)
+        .attr("x", 40)
+        .attr("y", 30)
         .attr("class", "chartTitle");
+   
         
 
      //create vertical axis generator
-    var yAxis = d3.axisLeft()
-        .scale(yScale);
+    
 
     //create frame for chart border
     var chartFrame = chart.append("rect")
@@ -274,11 +369,13 @@ function setChart(csvData, colorScale){
         .attr("height", chartInnerHeight)
         .attr("transform", translate);
 
-    //place axis
-    var axis = chart.append("g")
-        .attr("class", "axis")
-        .attr("transform", translate)
-        .call(yAxis);
+    var axis2 = chart.append("g")
+        .attr("class", "axis2")
+        .attr("transform", translate2)
+        .call(xAxis);
+    
+	
+   
 
     updateChart(circles, csvData.length, colorScale);
 
@@ -329,45 +426,113 @@ function changeAttribute(attribute, csvData){
     var circles = d3.selectAll("circle")
        .transition() //add animation
         .delay(function(d, i){
-            return i * 20
+            return i*5; 
         })
         .duration(100);
 
 	updateChart(circles, csvData.length, colorScale);
+
     
 };
 //function to position, size, and color bars in chart
 function updateChart(circles, n, colorScale){
+  
     //position bars
    circles.attr("cx", function(d) {
-	        return xScale(parseFloat(d[constant]))+30;
+	        return xScale(d[constant])+40;
 	   	})
 	   	.attr("cy", function(d) {
-
 	   		if(constant == expressed){
-	   			return 200;
+	   			return 150;
 	   		};
+
 	   		
-	        return yScale(parseFloat(d[expressed]))+200;
+	        return yScale((d[expressed]));
 	    
 	   	})
-	   	.attr("r", 5)
+	   	.attr("r", 8)
 	   	.style("fill", function(d){
+            
+           
+
+	   		if (d[expressed] == ""){
+	   			return "none";
+            };
+
             return choropleth(d, colorScale);
+
+            
     	});
+
 
 
    	//at the bottom of updateChart()...add text to chart title
     var chartTitle = d3.select(".chartTitle")
-        .text(expressed + " in each region");
+        .text(expressed);
+
+
+  //  	d3.select(".yLabel").remove();
+
+
+  //  	if(attrArray[0] !== expressed){
+  //   yLabel = container.append("text")
+		// .attr("class", "yLabel")
+		// .attr('transform', "rotate(-90)")
+		// .attr("x", -400)
+		// .attr("y", 690)
+		// .text(expressed);
+  //   };
+
+
+    d3.select(".axis1").remove();
+  
+
+    axis1 = chart.append("g")
+        .attr("class", "axis1")
+        .attr("transform", translate);
+
+    if(constant !== expressed){
+ 		axis1.call(yAxis);
+    };
+
+   
+
+   retrieveInfo();
+
 };
 
 //function to highlight enumeration units and bars
 function highlight(props){
     //change stroke
+
+    if(!isNaN(props[expressed])){
     var selected = d3.selectAll("." + props.ADM0_A3)
         .style("stroke", "red")
         .style("stroke-width", "2");
+
+    setLabel(props);
+	};
+};
+
+//function to highlight enumeration units and bars
+function highlight2(props){
+    //change stroke
+
+    if(!isNaN(props[expressed])){
+    var selected = d3.selectAll("." + props.ADM0_A3)
+        .style("stroke", "red")
+        .style("stroke-width", "10");
+
+    setLabel(props);
+	};
+};
+
+function moveFront (){
+
+	  return this.each(function(){
+	  this.parentNode.appendChild(this);
+	});
+	  
 };
 
 //function to reset the element style on mouseout
@@ -387,8 +552,162 @@ function dehighlight(props){
 
         var styleObject = JSON.parse(styleText);
 
+        d3.select(".infolabel")
+        .remove();
+
         return styleObject[styleName];
     };
+};
+
+//function to create dynamic label
+function setLabel(props){
+
+    //label content
+    var labelAttribute =  "<h1>" + props[expressed] +
+        "</h1><b>" + expressed + "</b>";
+
+
+
+    //create info label div
+    var infolabel = d3.select("body")
+        .append("div")
+        .attr("class", "infolabel")
+        .attr("id", props.ADM0_A3 + "_label")
+        .html(props[countryName]);
+       
+
+    var regionName = infolabel.append("div")
+        .attr("class", "labelname")
+        .html(labelAttribute);
+};
+
+//function to move info label with mouse
+function moveLabel(){
+     //get width of label
+    var labelWidth = d3.select(".infolabel")
+        .node()
+        .getBoundingClientRect()
+        .width;
+
+    //use coordinates of mousemove event to set label coordinates
+    var x1 = d3.event.clientX + 10,
+        y1 = d3.event.clientY - 75,
+        x2 = d3.event.clientX - labelWidth - 10,
+        y2 = d3.event.clientY + 25;
+
+    //horizontal label coordinate, testing for overflow
+    var x = d3.event.clientX > window.innerWidth - labelWidth - 20 ? x2 : x1; 
+    //vertical label coordinate, testing for overflow
+    var y = d3.event.clientY < 75 ? y2 : y1; 
+
+    d3.select(".infolabel")
+        .style("left", x + "px")
+        .style("top", y + "px");
+};
+
+function createLegend(colorScale){
+
+};
+
+function retrieveInfo() {
+
+	attrText.remove();
+
+	attrText = container.append("text")
+			.attr("class", "attrText")
+			.attr("x", 720)
+			.attr("y", 180);
+
+		
+	if(expressed == attrArray[0]){
+		
+		var line1 = attrText.append("tspan")
+			.text(expressed + " is measured in Purchasing");
+			  
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("Power Parity (PPP). PPP equalizes the purchasing power ");
+			
+		var line3 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("of different currencies by eliminating the differences in ");
+			 
+		var line3 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("price levels between countries. Explore the map to see how ");
+		
+		var line4 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("much people spend on health care in different countries!");
+	};
+
+	if(expressed == attrArray[1]){
+		
+		var line1 = attrText.append("tspan")
+			.text(expressed + " is measured in"); 
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("US Dollars. Explore the dataset to see how much you");
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("would spend on health care in other countries!");
+
+			
+	};
+
+	if(expressed == attrArray[2]){
+
+		var line1 = attrText.append("tspan")
+			.text("Eplore the dataset to see how life expectancy at birth "); 
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("is affected by health care spending!");
+	
+
+	};
+	if(expressed == attrArray[3]){
+		var line1 = attrText.append("tspan")
+			.text("Eplore the dataset to see how the maternal mortality"); 
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("rate (per 100,000 births) in each country is affected ");
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("by health care spending!");
+	
+	
+	};
+	if(expressed == attrArray[4]){
+		
+		var line1 = attrText.append("tspan")
+			.text("Eplore the dataset to see how the infant mortality"); 
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("rate (per 1,000 births) in each country is affected ");
+
+		var line2 = attrText.append("tspan")
+			.attr("x", 720)
+			.attr("dy", "25")
+			.text("by health care spending!");
+
+
+	
+	};
 };
 
 })(); 
